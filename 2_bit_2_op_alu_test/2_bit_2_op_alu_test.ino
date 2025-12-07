@@ -4,11 +4,13 @@
 
 const int inA_1 = 9;
 const int inA_0 = 8;
-
 const int inB_1 = 7;
 const int inB_0 = 6;
-
 const int inOp = 5;
+
+const int outRes_1 = 4;
+const int outRes_0 = 3;
+const int outCarryBit = 2;
 
 
 String toBinary(int val, int bits) {
@@ -31,24 +33,39 @@ void testOperation(int a, int b, int operation) {
   digitalWrite(inOp, operation);
 
   String operationSymbol;
-  int res;
-  int carryBit;
+  int expectedRes;
+  int expectedCarryBit;
   if (!operation) {
     operationSymbol = "AND";
-    res = a&b;
-    carryBit = 0; 
+    expectedRes = a&b;
+    expectedCarryBit = 0; 
   } else {
     operationSymbol = "+";
-    res = a+b;
-    carryBit = (res >> 2) & 1; 
+    expectedRes = a+b;
+    expectedCarryBit = (expectedRes >> 2) & 1; 
   }
+
+  int carryBit = digitalRead(outCarryBit);
+  int res_1 = digitalRead(outRes_1);
+  int res_0 = digitalRead(outRes_0);
 
   char buf[64];
   sprintf(buf, "Test: A=%s, B=%s, OP=%d\n", toBinary(a, 2).c_str(), toBinary(b, 2).c_str(), operation);
   Serial.print(buf);
 
-  sprintf(buf, "Expected output: CARRY=%d, OUT_1=%d, OUT_0=%d\n\n", carryBit, (res >> 1) & 1, res&1);
+  sprintf(buf, "Expected output: CARRY=%d, OUT_1=%d, OUT_0=%d\n", expectedCarryBit, (expectedRes >> 1) & 1, expectedRes&1);
   Serial.print(buf);
+
+  sprintf(buf, "Actual output: CARRY=%d, OUT_1=%d, OUT_0=%d\n", carryBit, res_1, res_0);
+  Serial.print(buf);
+
+  if (expectedCarryBit == carryBit && res_1 == ((expectedRes >> 1) & 1) && res_0 == (expectedRes&1)) {
+    Serial.println("Test passed");
+  } else {
+    Serial.println("!!!!!!!!!!!!!!!!!!!!!!!! Test failed !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+  }
+
+  Serial.println();
 }
 
 
@@ -56,7 +73,7 @@ void testAND() {
   for (int a=0; a<4; ++a) {
     for (int b=0; b<4; ++b) {
       testOperation(a, b, AND);
-      delay(5000);
+      delay(500);
     }
   }
 }
@@ -66,7 +83,7 @@ void testPLUS() {
   for (int a=0; a<4; ++a) {
     for (int b=0; b<4; ++b) {
       testOperation(a, b, PLUS);
-      delay(2500);
+      delay(500);
     }
   }
 }
@@ -91,6 +108,9 @@ void setup() {
   pinMode(inB_1, OUTPUT);
   pinMode(inB_0, OUTPUT);
   pinMode(inOp, OUTPUT);
+  pinMode(outRes_1, INPUT);
+  pinMode(outRes_0, INPUT);
+  pinMode(outCarryBit, INPUT);
   
   digitalWrite(inA_1, LOW);
   digitalWrite(inA_0, LOW);
